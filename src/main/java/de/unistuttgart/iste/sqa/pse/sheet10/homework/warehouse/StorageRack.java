@@ -21,8 +21,8 @@ public final class StorageRack {
 
 	private final int capacity;
 	private int numberOfItems;
-	List<Optional<StationeryItem>> storageRack;
-	Map<Identifier, Integer> catalog;
+	private List<Optional<StationeryItem>> storageRack;
+	private Map<Identifier, Integer> catalog;
 
 	/*@
 	@ requires capacity > 0;
@@ -70,7 +70,7 @@ public final class StorageRack {
 
 		//@ loop_invariant 0 <= index && index <= capacity;
         //@ loop_invariant (\forall int j; 0 <= j && j < index; storageRack.get(j).isPresent());
-		while (storageRack.get(index).isEmpty() || index > capacity) {
+		while (!storageRack.get(index).isEmpty() || index >= capacity) {
 			index++;
 		}
 

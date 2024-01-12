@@ -4,37 +4,79 @@ import de.unistuttgart.iste.sqa.pse.sheet10.homework.warehouse.items.Compass;
 import de.unistuttgart.iste.sqa.pse.sheet10.homework.warehouse.items.Pen;
 import de.unistuttgart.iste.sqa.pse.sheet10.homework.warehouse.items.Ruler;
 import de.unistuttgart.iste.sqa.pse.sheet10.homework.warehouse.items.StationeryItem;
+
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Represents a company.
  *
  * A company stores items and processes orders.
  *
- * @author your name
+ * @author Levin Kohler
  */
 public final class Company {
 
 	private final StorageRack itemStorageRack;
 	private final Buffer orderBuffer;
-	// TODO: Add data structure for exercise 1i here.
+	private final Set<Customer> knownCustomers;
 
-	// TODO add documentation here.
+	/*@
+    @ ensures itemStorageRack != null;
+    @ ensures orderBuffer != null;
+    @ ensures knownCustomers != null;
+    @*/
+	/**
+	 * Constructs a new Company instance with an order buffer, storage rack, and a set of known customers.
+	 */
 	public Company() {
 		orderBuffer = new Buffer();
-		// TODO: implement exercises 1e and 1i here.
-		itemStorageRack = null; // TODO delete this line if necessary
+		itemStorageRack = new StorageRack(75);
+		knownCustomers = new HashSet<>();
 	}
 
-	// TODO add documentation here.
+	/*@
+    @ requires stationeryItem != null;
+    @*/
+	/**
+	 * Stores a given stationery item in the storage rack.
+	 * 
+	 * @param stationeryItem The stationery item to be stored.
+	 */
 	public void storeInStorageRack(final StationeryItem stationeryItem) {
-		// TODO: implement exercise 1e here.
+		try {
+			itemStorageRack.addItem(stationeryItem);
+		} catch (IllegalArgumentException e) {
+			System.out.println(e.getMessage());
+		}
 	}
 
-	// TODO add documentation here.
+	/*@
+    @ requires identifier != null;
+    @ requires customer != null;
+    @ ensures knownCustomers.contains(customer) ==> orderBuffer.size() == \old(orderBuffer.size()) + 1;
+    @ ensures !knownCustomers.contains(\old(customer)) ==> orderBuffer.size() == \old(orderBuffer.size()) + 2;
+    @*/
+	/**
+	 * Processes an incoming order by identifying the compartment of the item and buffering it.
+	 * If the customer is new, a bonus item is also buffered.
+	 * 
+	 * @param identifier The identifier of the ordered item.
+	 * @param customer The customer placing the order.
+	 */
 	public void processIncomingOrder(final Identifier identifier, final Customer customer) {
-		// TODO implement exercises 1h and 1i here.
+		Optional<Integer> compartmentNumber = itemStorageRack.getCompartmentNumberOf(identifier);
+		
+		if (!compartmentNumber.isEmpty()) {
+			Optional<StationeryItem> item = itemStorageRack.getItem(compartmentNumber.get());
+			orderBuffer.bufferItem(item.get());
+			if (!knownCustomers.contains(customer)) {
+				orderBuffer.bufferItem(getBonusItem());
+				knownCustomers.add(customer);
+			}
+		}
 	}
 
 	/*@
