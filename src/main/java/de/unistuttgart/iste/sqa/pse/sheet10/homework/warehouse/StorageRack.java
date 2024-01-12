@@ -1,13 +1,18 @@
 package de.unistuttgart.iste.sqa.pse.sheet10.homework.warehouse;
 
 import de.unistuttgart.iste.sqa.pse.sheet10.homework.warehouse.items.StationeryItem;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * Represents a warehouse that can hold a fixed number of items.
  * The number of holdable items is defined by the capacity of the storage rack.
  *
- * @author your name
+ * @author Levin Kohler
  */
 public final class StorageRack {
 	// @ private instance invariant capacity > 0;
@@ -16,13 +21,15 @@ public final class StorageRack {
 
 	private final int capacity;
 	private int numberOfItems;
-	// TODO: Add data structures for exercises 1a and 1c here.
+	List<Optional<StationeryItem>> storageRack;
+	Map<Identifier, Integer> catalog;
 
 	/*@
 	@ requires capacity > 0;
 	@ ensures this.capacity == capacity;
 	@ ensures numberOfItems == 0;
-	@ TODO add missing pre- and postconditions here or in the JavaDoc.
+	@ ensures (\forall int i; 0 <= i && i < capacity; storageRack.get(i).isEmpty());
+	@ ensures catalog.isEmpty();
 	@*/
 	/**
 	 * Creates a new storage rack with the given capacity.
@@ -37,29 +44,107 @@ public final class StorageRack {
 		}
 		this.capacity = capacity;
 		numberOfItems = 0;
-		// TODO initialize data structures for exercises 1a and 1c here.
+		catalog = new HashMap<>();
+		storageRack = new ArrayList<>();
+
+		//@ loop_invariant 0 <= index && index <= capacity;
+		for (int index = 0; index < capacity; index++) {
+			storageRack.add(index, Optional.empty());
+		}
 	}
 
-	// TODO add documentation here.
+	/*@
+    @ requires (\exists int i; 0 <= i && i < capacity; storageRack.get(i).isEmpty());
+    @ ensures (\exists int i; 0 <= i && i < capacity; storageRack.get(i).isPresent() && storageRack.get(i).get() == stationeryItem);
+    @ ensures catalog.containsKey(stationeryItem.getIdentifier());
+    @*/
+	/**
+	 * The function adds a stationery item to a storage rack at the first empty compartment and updates the catalog.
+	 * 
+	 * @param stationeryItem The stationery item that gets added.
+	 * 
+	 * @throws IllegalArgumentException If there is no empty compartment available.
+	 */
 	public void addItem(final StationeryItem stationeryItem) {
-		// TODO implement exercises 1b and 1d here.
+		int index = 0;
+
+		//@ loop_invariant 0 <= index && index <= capacity;
+        //@ loop_invariant (\forall int j; 0 <= j && j < index; storageRack.get(j).isPresent());
+		while (storageRack.get(index).isEmpty() || index > capacity) {
+			index++;
+		}
+
+		if (index > capacity) {
+			throw new IllegalArgumentException("The storage rack is full.");
+		}
+		else{
+			storageRack.add(index, Optional.of(stationeryItem));
+			catalog.put(stationeryItem.getIdentifier(), index);
+		}
 	}
 
-	// TODO add documentation here.
+	/*@
+    @ requires storageRack.get(compartmentNumber).isPresent();
+    @ ensures storageRack.get(compartmentNumber).isEmpty();
+    @ ensures !catalog.containsKey(storageRack.get(compartmentNumber).get().getIdentifier());
+    @*/
+	/**
+	 * The removeItem function removes an item from a storage rack at a specified compartment number.
+	 * 
+	 * @param compartmentNumber The compartmentNumber parameter is an integer that represents the number
+	 * of the compartment in the storage rack from which the item needs to be removed.
+	 * 
+	 * @throws IllegalArgumentException If the specified storage rack compartment is empty.
+	 */
 	public void removeItem(final int compartmentNumber) {
-		// TODO implement exercises 1b and 1d here.
+		Optional<StationeryItem> item = storageRack.get(compartmentNumber);
+		
+		if (item.isEmpty()) {
+			throw new IllegalArgumentException("The storage rack is empty at that location.");
+		}
+		else {
+			catalog.remove(item.get().getIdentifier());
+			storageRack.remove(compartmentNumber);
+		}
 	}
 
-	// TODO add documentation here.
+	/*@
+    @ requires 0 <= compartmentNumber && compartmentNumber < capacity;
+    @ ensures \result.equals(storageRack.get(compartmentNumber));
+    @*/
+	/**
+	 * The getItem function returns an Optional object containing a StationeryItem from a storage rack
+	 * based on the given compartment number.
+	 * 
+	 * @param compartmentNumber The compartment number of the storage rack where the stationery item is
+	 * located.
+	 * @return The method is returning an Optional object that contains a StationeryItem.
+	 */
 	public /*@ pure @*/ Optional<StationeryItem> getItem(final int compartmentNumber) {
-		// TODO implement exercise 1b here.
-		return Optional.empty(); // TODO delete this line if necessary.
+		return storageRack.get(compartmentNumber);
 	}
 
-	// TODO add documentation here.
+	/*@
+    @ ensures catalog.containsKey(identifier) == \result.isPresent();
+    @*/
+	/**
+	 * The function returns the compartment number associated with a given identifier.
+	 * 
+	 * @param identifier The unique `identifier` parameter of a specific item.
+	 * @return The method is returning the compartmentnumber as an Optional<Integer> object.
+	 */
 	public /*@ pure @*/ Optional<Integer> getCompartmentNumberOf(final Identifier identifier) {
-		// TODO implement exercise 1d here.
-		return Optional.empty(); // TODO delete this line if necessary.
+		Integer index = catalog.get(identifier);
+		Optional<Integer> compartmentNumber;
+		
+		if (index == null) {
+			compartmentNumber = Optional.empty();
+		}
+		else{
+			compartmentNumber = Optional.of(index);
+		}
+		
+		return compartmentNumber;
 	}
 
 	/*@
